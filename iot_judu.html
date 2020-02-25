@@ -1,4 +1,4 @@
-﻿<html lang="en">
+<html lang="en">
 
 <title>Mahtisovellus</title>
 <meta charset="utf-8">
@@ -175,48 +175,57 @@
         });
         Humchart.render();
 
+            var jqxhr = $.get(url+"/0", function (data, status) {
+                if(data.State == 1){
+                   var mennytAika = data.Time;
+                    updateGraphs(mennytAika);
+                    paivitysfunktio();
+
+                }
+            });
+
 
             setInterval(function () {
                 //ajastin joka päivittää graafit ja ikkunat
                 paivitysfunktio();
-                updateGraphs();
+                updateGraphs(0);
             }, 1000);
         });
 
-        function updateGraphs() {
+        function updateGraphs(aika) {
             //päivittää graafit (pitäisikö varmaan ottaa parametreinä ajanjakso?)
-            var jqxhr = $.get(url, function (data, status) {
-                //get metodi joka hakee Temp,Hum,Ajanhetki 
+            //jos aika 0 hakee viimeisimmän rivin
+            var jqxhr = $.get(url+"/"+aika, function (data, status) {
+                //get metodi joka hakee Temp,Hum,Ajanhetki, State
                 data.forEach(tempObjekti => {
                     let tempV =new {
                         y: tempObjekti.Temp,
                         x: tempObjekti.Ajanhetki
                     }
-                        TempValues.push(tempV);
-
-                });
-
-                HumValues.push(tempV);
                     let HumV = new {
                         y: tempObjekti.Hum,
                         x: tempObjekti.Ajanhetki
                     }
                 HumValues.push(HumV);
+                TempValues.push(tempV);
+
             });
 
             Humchart.render();
             tempchart.render();
-        }
+        });
+    }
 
 
         function paivitysfunktio() {//päivittää ylälaidassa olevat valuet
-                var jqxhr = $.get(url, function (data, status) {
+                var jqxhr = $.get(url + "/0", function (data, status) {
                     $('#temp').text(data.Temp),
                     $('#humi').text(data.Moist),
-                    $('#timer').text(data.Timer),//Saadaanko samasta kutsusta?
-                    $('#state').text(data.State)//Saadaanko samasta kutsusta?
+                    $('#timer').text(data.Time),
+                    $('#state').text(data.State)
                 });
             }
+
             function Paalle(state) {
 
                 if (state == 1) {//hieno tietoturva ominaisuus
