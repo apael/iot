@@ -10,6 +10,19 @@
         box-sizing: border-box;
     }
 
+.red{
+	background:#f00;
+            text-align: center;
+              text-transform: uppercase;
+
+}
+.green{
+	background:#0f0;
+            text-align: center;
+              text-transform: uppercase;
+
+}
+
     .linkbox {
         border: 1px solid black;
         display: inline-block;
@@ -19,6 +32,10 @@
     .box {
         border: 1px solid black;
         color: white;
+  padding-top: 10px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  padding-left: 20px;
     }
     .w {
         color: white;
@@ -98,8 +115,8 @@
                 <th class="w">State</th>
             </tr>
             <tr>
-                <td id="temp" class="box">22</td>
-                <td id="humi" class="box">12</td>
+                <td id="temp" class="box">22 &#8451</td>
+                <td id="humi" class="box">12 %</td>
                 <td id="timer" class="box">40</td>
                 <td id="state" class="box">1</td>
             </tr>
@@ -138,9 +155,11 @@
         var Humchart;
 
 
+               
 
 
         $(document).ready(function () {
+
             tempchart = new CanvasJS.Chart("TempchartContainer", {
                 animationEnabled: true,
                 theme: "light2",
@@ -163,7 +182,7 @@
             animationEnabled: true,
             theme: "light2",
             title: {
-                text: "Lämpötila"
+                text: "Kosteus"
             },
             axisY: {
                 includeZero: false
@@ -219,12 +238,20 @@
 
         function paivitysfunktio() {//päivittää ylälaidassa olevat valuet
                 var jqxhr = $.get(url + "/0", function (data, status) {
-                    $('#temp').text(data.Temp),
-                    $('#humi').text(data.Moist),
-                    $('#timer').text(data.Time),
-                    $('#state').text(data.State)
+                    $('#temp').text(data.Temp + String.fromCharCode(176) + "C"),
+                    $('#humi').text(data.Moist +" %"),
+                    $('#timer').text(secondsTimeSpanToHMS(data.Time)),
+                    (data.State == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
                 });
             }
+    function secondsTimeSpanToHMS(s) {//tärkeä sekunnit h:m:s muotoon funktio
+        var h = Math.floor(s / 3600); 
+        s -= h * 3600;
+        var m = Math.floor(s / 60); 
+        s -= m * 60;
+        return h + ":" + (m < 10 ? '0' + m : m) + ":" + (s < 10 ? '0' + s : s); 
+    }
+
 
             function Paalle(state) {
 
