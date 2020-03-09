@@ -1,0 +1,18 @@
+#!/srv/pl-app/bin/python
+
+import serial
+import json
+import requests
+
+ser = serial.Serial('/dev/ttyUSB0')
+
+
+_data = ser.readline()
+
+js = json.loads(_data)
+
+r = requests.post("http://localhost:8080/api", js)
+
+#r = requests.post(url = "http://localhost:9999", data = js)
+
+print(r.text)
