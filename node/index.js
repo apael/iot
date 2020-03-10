@@ -73,12 +73,12 @@ app.get("/data", (req, res, n) => {
 app.post("/data", (req, res, n) => {
 
   if(req.body.Temp !== 'undefined') {
-    var q = "INSERT INTO Mittaukset(Ajanhetki, Temp) VALUES(now(), " + req.body.Temp + ")";
+    var q = "INSERT INTO Mittaukset(Ajanhetki, Temp) VALUES(now(), ?)";
+    var params = [req.body.Temp];
     console.log(q);
-    db.query(q, function(err, mysql_res) {
+    db.query(q, params, function(err, mysql_res) {
     
       if(err) throw err;
-  
       res.json({status : "OK"})
       
     });
