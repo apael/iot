@@ -39,20 +39,30 @@ app.get("/data", (req, res, n) => {
   }
   
   var q = "SELECT * FROM Mittaukset";
+  var params = [];
   
-  if(start_time.length > 0 && end_time.length > 0) q += " WHERE Ajanhetki BETWEEN '" + start_time + "' AND '" + end_time + "'";
-  else if(start_time.length > 0) q += " WHERE Ajanhetki >= '" + start_time + "'";
-  else if(end_time.length > 0) q += " WHERE Ajanhetki <= '" + end_time + "'";
+  if(start_time.length > 0 && end_time.length > 0) {
+    q += " WHERE Ajanhetki BETWEEN ? AND ?";
+    params = [start_time, end_time];
+  } 
+  else if(start_time.length > 0) {
+    q += " WHERE Ajanhetki >= ?";
+    params = [start_time];
+  } 
+  else if(end_time.length > 0) {
+    q += " WHERE Ajanhetki <= ?";
+    params = [end_time];
+  }
 
   q += " ORDER BY Ajanhetki DESC";
+
   if(start_time.length == 0 && end_time.length == 0) q += " LIMIT 1";
 
   console.log(q);
   
-  db.query(q, function(err, mysql_res) {
+  db.query(q, params, function(err, mysql_res) {
     
     if(err) throw err;
-
     res.json(mysql_res)
     
   });
