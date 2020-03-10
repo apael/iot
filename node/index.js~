@@ -1,0 +1,58 @@
+var express = require("express");
+var mysql = require("mysql");
+
+var server_port = 9999;
+
+var db = mysql.createConnection({
+
+  host: "localhost",
+  user: "r7",
+  password: "CCNA61",
+  database: "mydb"
+
+});
+
+db.connect(function(err) {
+
+  if(err) throw err;
+  console.log("MySQL OK");
+
+});
+
+var app = express();
+
+app.get("/data", (req, res, n) => {
+
+  var start_time = "";
+  var end_time = "";
+  
+  if(typeof req.query.start_time !== 'undefined' && req.query.start_time) {
+    start_time = req.query.start_time;
+  }
+  
+  if(typeof req.query.end_time !== 'undefined' && req.query.end_time) {
+      end_time = req.query.end_time;
+  }
+  
+  var q = "SELECT * FROM Mittaukset";
+  if(start_time.length > 0) q += " WHERE Ajanhetki BETWEEN '" +
+start_time + "' AND '" + end_time + "'";
+  
+  console.log(q);
+  
+  db.query(q, function(err, mysql_res) {
+    
+    if(err) throw err;
+    
+    console.log("");
+    res.json(mysql_res)
+    
+  });
+
+});
+
+app.listen((server_port), () => {
+
+  console.log("Server running at " + server_port);
+
+});
