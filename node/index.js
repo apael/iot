@@ -73,8 +73,8 @@ app.get("/data", (req, res, n) => {
 app.post("/data", (req, res, n) => {
 
   if(req.body.Temp !== 'undefined') {
-    var q = "INSERT INTO Mittaukset(Ajanhetki, Temp) VALUES(now(), ?)";
-    var params = [req.body.Temp];
+    var q = "INSERT INTO Mittaukset(Ajanhetki, Temp, Moist, Door, State) VALUES(now(), ?, ?, ?, ?)";
+    var params = [req.body.Temp, req.body.Moist, req.body.Door, req.body.State];
     console.log(q);
     db.query(q, params, function(err, mysql_res) {
     
