@@ -1,9 +1,18 @@
 var express = require("express");
 var mysql = require("mysql");
 var bp = require("body-parser");
-const { exec } = require("child_process");
+var child_process = require("child_process");
+var SerialPort = require("serialport");
+var SerialReadLine = require("@serialport/parser-readline");
+var serial_port = new SerialPort("/dev/ttyUSB0", {baudRate: 9600});
+var serial_parser = new SerialReadLine();
+serial_port.pipe(serial_parser);
 
-var server_port = 9999;
+var server_port = 2236;
+var res_status = null;
+
+var app = express();
+app.use(bp.json());
 
 var db = mysql.createConnection({
 
@@ -21,8 +30,12 @@ db.connect(function(err) {
 
 });
 
-var app = express();
-app.use(bp.json());
+// --- GET / ---
+app.get("/", function(req, res, n){
+
+  res.json({status: "OK"});
+
+});
 
 // --- GET DATA ---
 app.get("/data", (req, res, n) => {
@@ -31,34 +44,42 @@ app.get("/data", (req, res, n) => {
   var end_time = "";
   
   if(typeof req.query.start_time !== 'undefined' && req.query.start_time) {
+
     start_time = req.query.start_time;
+
   }
   
   if(typeof req.query.end_time !== 'undefined' && req.query.end_time) {
+
       end_time = req.query.end_time;
+
   }
   
   var q = "SELECT * FROM Mittaukset";
   var params = [];
   
   if(start_time.length > 0 && end_time.length > 0) {
-    q += " WHERE Ajanhetki BETWEEN ? AND ?";
+
+    q += " WHERE SavedOn BETWEEN ? AND ?";
     params = [start_time, end_time];
+
   } 
   else if(start_time.length > 0) {
-    q += " WHERE Ajanhetki >= ?";
+
+    q += " WHERE SavedOn >= ?";
     params = [start_time];
+
   } 
   else if(end_time.length > 0) {
-    q += " WHERE Ajanhetki <= ?";
+
+    q += " WHERE SavedOn <= ?";
     params = [end_time];
+
   }
 
-  q += " ORDER BY Ajanhetki DESC";
+  q += " ORDER BY SavedOn DESC";
 
   if(start_time.length == 0 && end_time.length == 0) q += " LIMIT 1";
-
-  console.log(q);
   
   db.query(q, params, function(err, mysql_res) {
     
@@ -69,71 +90,126 @@ app.get("/data", (req, res, n) => {
 
 });
 
-// --- POST DATA ---
-app.post("/data", (req, res, n) => {
-
-  if(req.body.Temp !== 'undefined') {
-    var q = "INSERT INTO Mittaukset(Ajanhetki, Temp) VALUES(now(), " + req.body.Temp + ")";
-    console.log(q);
-    db.query(q, function(err, mysql_res) {
-    
-      if(err) throw err;
-  
-      res.json({status : "OK"})
-      
-    });
-  }
-  else {
-    res.json({status : "NOT_OK"});
-  }
-});
-
-// --- SWITCH ON/OFF ---
+// --- RELAY ON/OFF ---
 app.post("/switch", (req, res, n) => {
 
   if(req.body.state !== 'undefined') {
+
     var state = req.body.state;
+
     if(state == 1) {
-      exec("../switch.py 1", (error, stdout, stderr) => {
-        if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-        }
-        if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
-        }
-        console.log("Switch on");
-        res.json({status : "SWITCH ON"});
-      });
-    }
-    if(state == 0) {
-      exec("../switch.py 0", (error, stdout, stderr) => {
-        if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-        }
-        if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
-        }
-        console.log("Switch off");
-        res.json({status : "SWITCH OFF"});
-      });
+
+      try {
+
+        serial_port.write("1");
+        res.json({status: "OK"});
+
+      }
+      catch(err) {
+
+        res.json({status: "NOT_OK"});
+
+      }
 
     }
+    else if(state == 0) {
+
+      try {
+
+        serial_port.write("0");
+        res.json({status: "OK"});
+
+      }
+      catch(err) {
+
+        res.json({status: "NOT_OK"});
+
+      }
+
+    }
+    else {
+
+      res.json({status: "NOT_OK"});
+
+    }
+
   }
   else {
+
     res.json({status : "NOT_OK"});
+
   }
 
 });
 
+// --- REQUEST SENSOR STATUS ---
+app.post("/status", function(req, res, n){
 
+  try {
 
-// --- ---
+    serial_port.write("s");
+    res_status = res;
+
+  }
+  catch(err) {
+
+    console.log(err);
+
+  }
+
+});
+
+// --- REQUEST DATA FROM SERIAL EVERY 60 SEC ---
+setInterval(() => {
+  
+  try {
+
+    serial_port.write("s");
+
+  }
+  catch(err) {
+
+    console.log(err);
+
+  }
+
+}, 60000);
+
+// --- LISTEN FOR SERIAL DATA & INSERT TO DB ---
+serial_parser.on("data", function(line) {
+  
+  try {
+
+    var obj = JSON.parse(line);
+    var q = "INSERT INTO Mittaukset(Temp, Hum, Door, State, SavedOn) VALUES(?, ?, ?, ?, now())";
+    var params = [obj.Temp, obj.Hum, obj.Door, obj.State];
+
+    db.query(q, params, function(err, db_res) {
+
+      if(err) {
+        console.log(err);
+      }
+
+      if(res_status !== null) {  // getting status
+        res_status.json(obj);
+        res_status = null;
+      }
+
+    });
+
+  }
+  catch(err) {
+
+    console.log(err);
+
+  }
+
+});
+
+// --- START SERVER ---
 app.listen((server_port), () => {
 
   console.log("Server running at " + server_port);
 
 });
+
