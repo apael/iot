@@ -23,13 +23,12 @@ DROP TABLE IF EXISTS `Mittaukset`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Mittaukset` (
-  `Ajanhetki` datetime NOT NULL,
+  `SavedOn` datetime NOT NULL,
   `Temp` decimal(5,2) DEFAULT NULL,
-  `Light` int(11) DEFAULT NULL,
-  `Moist` int(11) DEFAULT NULL,
+  `Hum` decimal(5,2) DEFAULT NULL,
   `Door` tinyint(1) DEFAULT NULL,
   `State` tinyint(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`Ajanhetki`)
+  PRIMARY KEY (`SavedOn`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -42,4 +41,4 @@ CREATE TABLE `Mittaukset` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-10 16:36:19
+-- Dump completed on 2020-03-17 20:06:42
