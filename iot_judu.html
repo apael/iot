@@ -1,5 +1,5 @@
 <html lang="en">
-<title>Mahtisovellus</title>
+<title>Etäsauna</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
@@ -110,7 +110,7 @@
 
 <body>
     <header>
-        <h2>Mahtisovellus</h2>
+        <h2>EtäSauna</h2>
         <table>
             <tr>
                 <th class="w">Temp</th>
@@ -163,9 +163,6 @@
     var Humchart;
 
 
-
-
-
     $(document).ready(function () {
         ($("#state").text() == 1) ?
             $('#state').addClass("green").text("on") :
@@ -177,6 +174,7 @@
         tempchart = new CanvasJS.Chart("TempchartContainer", {
             animationEnabled: true,
             theme: "light2",
+            valueFormatString: "HH:mm",
             title: {
                 text: "Lämpötila"
             },
@@ -195,6 +193,7 @@
         Humchart = new CanvasJS.Chart("HumchartContainer", {
             animationEnabled: true,
             theme: "light2",
+            valueFormatString: "HH:mm",
             title: {
                 text: "Kosteus"
             },
@@ -215,7 +214,7 @@
             paivitysfunktio();
 
             // if (mennytAika > 0)
-            updateGraphs(0);
+            updateGraphs(1);
 
             //}
         });
@@ -225,35 +224,49 @@
             //ajastin joka päivittää graafit ja ikkunat
             paivitysfunktio();
             updateGraphs(0);
-        }, 1000);
+        }, 1000 * 60);
     });
 
     function updateGraphs(aika) {
         //päivittää graafit (pitäisikö varmaan ottaa parametreinä ajanjakso?)
         //jos aika 0 hakee viimeisimmän rivin
-        var maxDate = Date.parse($("#datepickerMax").val()) || new Date();
-        var minDate = Date.parse($("#datepickerMin").val()) || 0;
 
-        var newurl = url + "/data?start_time=" + minDate + "&end_time=" + maxDate;
+        var d = new Date();
+        d.setHours(d.getHours() - 3);
+
+        var maxDate = Date.parse($("#datepickerMax").val()) || new Date();
+        var minDate = Date.parse($("#datepickerMin").val()) || d;
+
+        var newurl = url + "/data?start_time=" + formatDate(minDate) + "&end_time=" + formatDate(maxDate);
+        console.log(newurl);
 
         if (aika == 0)
             var newurl = url + "/data";
+
+        var stackH = [];
+        var stackT = [];
 
         var jqxhr = $.get(newurl, function (data, status) {
             //get metodi joka hakee Temp,Hum,Ajanhetki, State
             data.forEach(tempObjekti => {
                 let tempV = {
                     y: tempObjekti.Temp,
-                    x: tempObjekti.SavedAt
+                    x: new Date(tempObjekti.SavedOn)
                 }
                 let HumV = {
                     y: tempObjekti.Hum,
-                    x: tempObjekti.SavedAt
+                    x: new Date(tempObjekti.SavedOn)
                 }
-                HumValues.push(HumV);
-                TempValues.push(tempV);
+                stackH.push(HumV);
+                stackT.push(tempV);
 
             });
+            while (stackH.length > 0) {
+                HumValues.push(stackH.pop());
+            }
+            while (stackT.length > 0) {
+                TempValues.push(stackT.pop());
+            }
 
             Humchart.render();
             tempchart.render();
@@ -266,7 +279,7 @@
             $('#temp').text(data[0].Temp + String.fromCharCode(176) + "C"),
                 $('#humi').text(data[0].Hum + " %"),
                 // $('#timer').text(secondsTimeSpanToHMS(data.Time)),
-                (data.State == 1) ?
+                (data[0].State == 1) ?
                     $('#state').addClass("green").text("on").removeClass("red") :
                     $('#state').addClass("red").text("off").removeClass("green");
         });
@@ -279,6 +292,23 @@
         return h + ":" + (m < 10 ? '0' + m : m) + ":" + (s < 10 ? '0' + s : s);
     }
 
+    Number.prototype.padLeft = function (base, chr) {
+        var len = (String(base || 10).length - String(this).length) + 1;
+        return len > 0 ? new Array(len).join(chr || '0') + this : this;
+    }
+
+    function formatDate(date) {
+        var d = new Date(date),
+            dformat = [d.getFullYear().padLeft(),
+            (d.getMonth() + 1).padLeft(),
+            d.getDate()].join('-') +
+                '-' +
+                [d.getHours().padLeft(),
+                d.getMinutes().padLeft(),
+                d.getSeconds().padLeft()].join('-');
+
+        return dformat;
+    }
 
     function Paalle(state) {
 
@@ -297,10 +327,15 @@
         $.ajax({//annetaan negatiivinen aika ajastimelle
             url: url + "/switch",
             type: 'POST',
-            data: newState,
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(newState),
             success: function (data) {
-                console.log("Kiukaan state muutettu")
-                $('#state').addClass("green").text("on");
+                console.log("Kiukaan state muutettu");
+                (state == 1) ?
+                    $('#state').addClass("green").text("on").removeClass("red") :
+                    $('#state').addClass("red").text("off").removeClass("green");
+                console.log(data);
             }
         });
     };
