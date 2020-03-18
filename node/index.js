@@ -1,25 +1,28 @@
 var express = require("express");
 var mysql = require("mysql");
 var bp = require("body-parser");
-var child_process = require("child_process");
 var SerialPort = require("serialport");
 var SerialReadLine = require("@serialport/parser-readline");
 var serial_port = new SerialPort("/dev/ttyUSB0", {baudRate: 9600});
 var serial_parser = new SerialReadLine();
 serial_port.pipe(serial_parser);
+var cors = require("cors");
 
 var server_port = 2236;
 var res_status = null;
+var save = false;
 
 var app = express();
 app.use(bp.json());
+app.use(cors());
 
 var db = mysql.createConnection({
 
   host: "localhost",
   user: "r7",
   password: "CCNA61",
-  database: "mydb"
+  database: "mydb",
+  dateStrings: ["DATETIME"]
 
 });
 
@@ -101,8 +104,10 @@ app.post("/switch", (req, res, n) => {
 
       try {
 
+        save = true;
         serial_port.write("1");
-        res.json({status: "OK"});
+        serial_port.write("s");
+        res_status = res;
 
       }
       catch(err) {
@@ -116,8 +121,10 @@ app.post("/switch", (req, res, n) => {
 
       try {
 
+        save = true;
         serial_port.write("0");
-        res.json({status: "OK"});
+        serial_port.write("s");
+        res_status = res;
 
       }
       catch(err) {
@@ -143,12 +150,13 @@ app.post("/switch", (req, res, n) => {
 });
 
 // --- REQUEST SENSOR STATUS ---
-app.post("/status", function(req, res, n){
+app.get("/status", function(req, res, n){
 
   try {
 
-    serial_port.write("s");
     res_status = res;
+    serial_port.write("s");
+    save = false;
 
   }
   catch(err) {
@@ -165,6 +173,7 @@ setInterval(() => {
   try {
 
     serial_port.write("s");
+    save = true;
 
   }
   catch(err) {
@@ -184,18 +193,27 @@ serial_parser.on("data", function(line) {
     var q = "INSERT INTO Mittaukset(Temp, Hum, Door, State, SavedOn) VALUES(?, ?, ?, ?, now())";
     var params = [obj.Temp, obj.Hum, obj.Door, obj.State];
 
-    db.query(q, params, function(err, db_res) {
+    if(save) {
+      db.query(q, params, function(err, db_res) {
 
-      if(err) {
-        console.log(err);
-      }
+        if(err) {
+    
+          console.log(err);
+    
+        }
 
-      if(res_status !== null) {  // getting status
-        res_status.json(obj);
-        res_status = null;
-      }
+        save = false;
+      
+      });
+    
+    }
 
-    });
+    if(res_status !== null) {
+    
+      res_status.json(obj);
+      res_status = null;
+    
+    }
 
   }
   catch(err) {
