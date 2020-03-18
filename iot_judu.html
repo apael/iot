@@ -224,7 +224,8 @@
                 text: "Lämpötila"
             },
             axisY: {
-                includeZero: false
+                includeZero: false,
+                valueFormatString: "###.#" + String.fromCharCode(176) + "C"
             },
             data: [{
                 type: "line",
@@ -243,7 +244,9 @@
                 text: "Kosteus"
             },
             axisY: {
-                includeZero: false
+                includeZero: false,
+                valueFormatString: "##,#0 " + '%'
+
             },
             data: [{
                 type: "line",
