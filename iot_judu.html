@@ -167,7 +167,9 @@
 
 
     $(document).ready(function () {
-        ($("#state").text() == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
+        ($("#state").text() == 1) ?
+            $('#state').addClass("green").text("on") :
+            $('#state').addClass("red").text("off");
         $('#temp').text(77 + String.fromCharCode(176) + "C");
         $('#timer').text(secondsTimeSpanToHMS(2222));
 
@@ -207,15 +209,15 @@
         Humchart.render();
 
         var jqxhr = $.get(url + "/data", function (data, status) {
-            if (data.State == 1) {
-                var mennytAika = data.Time;
+            // if (data.State == 1) {
+            // var mennytAika = data.Time;
 
-                paivitysfunktio();
+            paivitysfunktio();
 
-                if (mennytAika > 0)
-                    updateGraphs(mennytAika);
+            // if (mennytAika > 0)
+            updateGraphs(0);
 
-            }
+            //}
         });
 
 
@@ -240,11 +242,11 @@
         var jqxhr = $.get(newurl, function (data, status) {
             //get metodi joka hakee Temp,Hum,Ajanhetki, State
             data.forEach(tempObjekti => {
-                let tempV = new {
+                let tempV = {
                     y: tempObjekti.Temp,
                     x: tempObjekti.SavedAt
                 }
-                let HumV = new {
+                let HumV = {
                     y: tempObjekti.Hum,
                     x: tempObjekti.SavedAt
                 }
@@ -261,10 +263,12 @@
 
     function paivitysfunktio() {//päivittää ylälaidassa olevat valuet
         var jqxhr = $.get(url + "/data", function (data, status) {
-            $('#temp').text(data.Temp + String.fromCharCode(176) + "C"),
-                $('#humi').text(data.Hum + " %"),
+            $('#temp').text(data[0].Temp + String.fromCharCode(176) + "C"),
+                $('#humi').text(data[0].Hum + " %"),
                 // $('#timer').text(secondsTimeSpanToHMS(data.Time)),
-                (data.State == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
+                (data.State == 1) ?
+                    $('#state').addClass("green").text("on").removeClass("red") :
+                    $('#state').addClass("red").text("off").removeClass("green");
         });
     }
     function secondsTimeSpanToHMS(s) {//tärkeä sekunnit h:m:s muotoon funktio
@@ -281,7 +285,7 @@
         if (state == 1) {//hieno tietoturva ominaisuus
             var pw = prompt("Syötä salasana", "");
 
-            if (pw == undefined || pw != salainensana)//kovakoodattu salasana
+            if (pw == undefined || pw != "salainensana")//kovakoodattu salasana
                 return
 
             var aika = $("#ajastin").val() * 60;
