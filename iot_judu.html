@@ -169,7 +169,7 @@
             <br>
 
             <label for="ajastin">Ajastin (Mins)</label><br>
-            <input id="ajastin" name="ajastin" class="dt"><br><br>
+            <input id="start_time" name="ajastin" class="dt"><br><br>
 
             <p>Tarkastele aikaväliä</p>
 
@@ -203,6 +203,7 @@
     var tempchart;
     var HumValues = [];
     var Humchart;
+    const defaultOnTime = 5;
 
 
     $(document).ready(function () {
@@ -333,7 +334,6 @@
 
 
         var newurl = url + "/data?start_time=" + formatDate(minDate) + "&end_time=" + formatDate(maxDate);
-        console.log(newurl);
 
         if (aika == 0)
             var newurl = url + "/data";
@@ -344,7 +344,6 @@
             //get metodi joka hakee Temp,Hum,Ajanhetki, State
             data.forEach(tempObjekti => {
                 if (aika > 1 && tempObjekti.State == 0) {
-                    console.log("objecti hylätty")
 
                 } else {
                     let tempV = {
@@ -408,7 +407,15 @@
         return dformat;
     }
 
+
+
+
+
+
     function Paalle(state) {
+
+        var todo = [];
+
 
         if (state == 1) {//hieno tietoturva ominaisuus
             var pw = prompt("Syötä salasana", "");
@@ -417,10 +424,8 @@
                 return
 
 
-            var todo = [];
 
             var aloitusaika = $("#start_time").val() || 0;
-
 
 
             if (aloitusaika.length > 0) {
@@ -430,42 +435,61 @@
                     "Due": aloitusaika + ":00",
                     "Action": "1"
                 });
-                aloitusaika.setHours(aloitusaika.getHours() + 2);
+
+                var sulkuaika = new Date(aloitusaika);
+                sulkuaika.setHours(sulkuaika.getHours() + 3);
+                console.log(sulkuaika);
+
                 todo.push({
-                    "Due": aloitusaika + ":00",
+                    "Due": sulkuaika + ":00",
                     "Action": "0"
                 });
-            }
 
-            if (todo.length > 0) {
+                console.log(todo);
+
                 $.ajax(url + "/tasks", {
                     method: "POST",
                     contentType: "application/json",
                     data: JSON.stringify(todo),
                     success: function (data, status, xhr) {
-                        return;
+                        return
                     }
                 });
+                return
             }
-
 
         }
 
         var newState = { "state": state }
 
-
-        $.ajax({//annetaan negatiivinen aika ajastimelle
+        $.ajax({
             url: url + "/switch",
             type: 'POST',
             dataType: "json",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(newState),
             success: function (data) {
-                console.log("Kiukaan state muutettu");
                 (state == 1) ?
                     $('#state').addClass("green").text("on").removeClass("red") :
                     $('#state').addClass("red").text("off").removeClass("green");
-                console.log(data);
+
+                var sulkuaika = new Date();
+                sulkuaika.setHours(sulkuaika.getHours() + defaultOnTime);
+
+                todo.push({
+                    "Due": sulkuaika.toISOString().slice(0, 19).replace('T', ' ') + ":00",
+                    "Action": "0"
+                });
+
+                $.ajax(url + "/tasks", {
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(todo),
+                    success: function (data, status, xhr) {
+
+                    }
+                });
+
             }
         });
     };
