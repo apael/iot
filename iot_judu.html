@@ -9,6 +9,26 @@
         box-sizing: border-box;
     }
 
+    .superluokka {
+        height: 100%;
+        display: flex;
+    }
+
+    .luokka {
+        width: 50%;
+        margin: 10px;
+    }
+
+    #ruutu2 {
+        text-align: center;
+
+    }
+
+    #ajastin {
+        width: 50%;
+
+    }
+
     .red {
         background: #f00;
         text-align: center;
@@ -20,6 +40,15 @@
         background: #0f0;
         text-align: center;
         text-transform: uppercase;
+
+    }
+
+    .onoff {
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        border: 1px solid black;
 
     }
 
@@ -58,7 +87,7 @@
     /* Create two columns/boxes that floats next to each other */
     nav {
         float: left;
-        width: 30%;
+        width: 15%;
         background: #ccc;
         padding: 20px;
         height: 100%;
@@ -73,7 +102,7 @@
     article {
         float: left;
         padding: 20px;
-        width: 70%;
+        width: 85%;
         background-color: #f1f1f1;
         height: 100%;
     }
@@ -129,20 +158,23 @@
 
     <section>
         <nav id="ruutu2">
-            <form>
-                <label for="ajastin">Ajastin (Mins)</label>
-                <input type="number" id="ajastin" name="ajastin"><br><br>
-            </form>
-            <button type="button" onclick="Paalle(1)">Laita päälle</button>
-            <button type="button" onclick="Paalle(0)">Laita pois päältä</button>
+
+            <p>Hallinnoi kiuasta</p>
+            <button type="button" onclick="Paalle(1)" class="green onoff">ON</button>
+            <button type="button" onclick="Paalle(0)" class="red onoff">OFF</button>
+            <br>
+            <br>
+
+            <label for="ajastin">Ajastin (Mins)</label><br>
+            <input type="number" id="ajastin" name="ajastin"><br><br>
         </nav>
 
 
 
-        <article id="ruutu">
+        <article id="ruutu" class="superluokka">
 
-            <div id="TempchartContainer" style="height: 300px; width: 50%;"></div>
-            <div id="HumchartContainer" style="height: 300px; width: 50%;"></div>
+            <div id="TempchartContainer" class="luokka" style="height: 300px; width: 50%;"></div>
+            <div id="HumchartContainer" class="luokka" style="height: 300px; width: 50%;"></div>
 
         </article>
     </section>
