@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
+<link rel="stylesheet" type="text/css" href="http://88.148.208.176:2236/example/jquery.datetimepicker.min.css">
 
 <style>
     * {
@@ -132,9 +133,11 @@
         }
     }
 </style>
+
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+<script src="http://88.148.208.176:2236/example/jquery.datetimepicker.full.min.js"></script>
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
 <body>
@@ -166,7 +169,14 @@
             <br>
 
             <label for="ajastin">Ajastin (Mins)</label><br>
-            <input type="number" id="ajastin" name="ajastin"><br><br>
+            <input id="ajastin" name="ajastin" class="dt"><br><br>
+
+            <p>Tarkastele aikaväliä</p>
+
+            <p id="info">Valitse päivä: <input id="datepickerMin"></p>
+            <p id="info">Valitse päivä: <input id="datepickerMax"></p>
+            <button type="button" id="hae">Hae</button>
+
         </nav>
 
 
@@ -240,15 +250,10 @@
         Humchart.render();
 
         var jqxhr = $.get(url + "/data", function (data, status) {
-            // if (data.State == 1) {
-            // var mennytAika = data.Time;
+            data[0].State == 1 ? updateGraphs(3) : updateGraphs(1);
 
             paivitysfunktio();
 
-            // if (mennytAika > 0)
-            updateGraphs(1);
-
-            //}
         });
 
 
@@ -257,17 +262,75 @@
             paivitysfunktio();
             updateGraphs(0);
         }, 1000 * 60);
+
+        $(".dt").datetimepicker({//ajastin
+            inline: false,
+            ownerDocument: document,
+            contentWindow: window,
+            format: "Y-m-d H:i",
+            formatTime: "H:i",
+            formatDate: "Y-m-d",
+            startDate: new Date(),
+            step: 1
+
+        });
+
+        var dt = new Date();
+        dt.setDate(dt.getDate() - 366);
+
+
+
+        $(function () {
+            $("#datepickerMin").datepicker({
+
+                minDate: dt
+            });
+        });
+
+        $(function () {
+            $("#datepickerMax").datepicker({
+
+                minDate: dt
+            });
+        });
+
+        $("#hae").click(function (e) {
+            tempchart.data[0].remove();
+            Humchart.data[0].remove();
+
+
+            TempValues = [];
+            HumValues = [];
+
+
+            var serieT = {
+                type: "line",
+                dataPoints: TempValues
+            }
+            var serieH = {
+                type: "line",
+                dataPoints: HumValues
+            }
+
+            tempchart.options.data.push(serieT);
+            Humchart.options.data.push(serieH);
+
+            updateGraphs(1);
+        });
+
     });
 
     function updateGraphs(aika) {
-        //päivittää graafit (pitäisikö varmaan ottaa parametreinä ajanjakso?)
+        //päivittää graafit 
         //jos aika 0 hakee viimeisimmän rivin
 
         var d = new Date();
-        d.setHours(d.getHours() - 3);
+        d.setHours(d.getHours() - aika);
 
-        var maxDate = Date.parse($("#datepickerMax").val()) || new Date();
-        var minDate = Date.parse($("#datepickerMin").val()) || d;
+
+        !$("#datepickerMax").val() ? maxDate = new Date() : maxDate = new Date($("#datepickerMax").val());
+        !$("#datepickerMin").val() ? minDate = d : minDate = new Date($("#datepickerMin").val());
+
 
         var newurl = url + "/data?start_time=" + formatDate(minDate) + "&end_time=" + formatDate(maxDate);
         console.log(newurl);
@@ -277,21 +340,24 @@
 
         var stackH = [];
         var stackT = [];
-
         var jqxhr = $.get(newurl, function (data, status) {
             //get metodi joka hakee Temp,Hum,Ajanhetki, State
             data.forEach(tempObjekti => {
-                let tempV = {
-                    y: tempObjekti.Temp,
-                    x: new Date(tempObjekti.SavedOn)
-                }
-                let HumV = {
-                    y: tempObjekti.Hum,
-                    x: new Date(tempObjekti.SavedOn)
-                }
-                stackH.push(HumV);
-                stackT.push(tempV);
+                if (aika > 1 && tempObjekti.State == 0) {
+                    console.log("objecti hylätty")
 
+                } else {
+                    let tempV = {
+                        y: tempObjekti.Temp,
+                        x: new Date(tempObjekti.SavedOn)
+                    }
+                    let HumV = {
+                        y: tempObjekti.Hum,
+                        x: new Date(tempObjekti.SavedOn)
+                    }
+                    stackH.push(HumV);
+                    stackT.push(tempV);
+                }
             });
             while (stackH.length > 0) {
                 HumValues.push(stackH.pop());
@@ -350,7 +416,39 @@
             if (pw == undefined || pw != "salainensana")//kovakoodattu salasana
                 return
 
-            var aika = $("#ajastin").val() * 60;
+
+            var todo = [];
+
+            var aloitusaika = $("#start_time").val() || 0;
+
+
+
+            if (aloitusaika.length > 0) {
+
+
+                todo.push({
+                    "Due": aloitusaika + ":00",
+                    "Action": "1"
+                });
+                aloitusaika.setHours(aloitusaika.getHours() + 2);
+                todo.push({
+                    "Due": aloitusaika + ":00",
+                    "Action": "0"
+                });
+            }
+
+            if (todo.length > 0) {
+                $.ajax(url + "/tasks", {
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(todo),
+                    success: function (data, status, xhr) {
+                        return;
+                    }
+                });
+            }
+
+
         }
 
         var newState = { "state": state }
