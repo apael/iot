@@ -1,5 +1,4 @@
 <html lang="en">
-
 <title>Mahtisovellus</title>
 <meta charset="utf-8">
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -10,18 +9,19 @@
         box-sizing: border-box;
     }
 
-.red{
-	background:#f00;
-            text-align: center;
-              text-transform: uppercase;
+    .red {
+        background: #f00;
+        text-align: center;
+        text-transform: uppercase;
 
-}
-.green{
-	background:#0f0;
-            text-align: center;
-              text-transform: uppercase;
+    }
 
-}
+    .green {
+        background: #0f0;
+        text-align: center;
+        text-transform: uppercase;
+
+    }
 
     .linkbox {
         border: 1px solid black;
@@ -32,14 +32,16 @@
     .box {
         border: 1px solid black;
         color: white;
-  padding-top: 10px;
-  padding-right: 20px;
-  padding-bottom: 10px;
-  padding-left: 20px;
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
     }
+
     .w {
         color: white;
     }
+
     body {
         font-family: Arial, Helvetica, sans-serif;
     }
@@ -62,11 +64,11 @@
         height: 100%;
     }
 
-        /* Style the list inside the menu */
-        nav ul {
-            list-style-type: none;
-            padding: 0;
-        }
+    /* Style the list inside the menu */
+    nav ul {
+        list-style-type: none;
+        padding: 0;
+    }
 
     article {
         float: left;
@@ -93,7 +95,9 @@
 
     /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
     @media (max-width: 600px) {
-        nav, article {
+
+        nav,
+        article {
             width: 100%;
             height: auto;
         }
@@ -147,38 +151,46 @@
         <p>Made by </p>
     </footer>
     <iframe name="huijausikkuna" style="display:none;"></iframe>
-    <script>
-        var url = "http://localhost:9090";
-        var TempValues = [];
-        var tempchart;
-        var HumValues = [];
-        var Humchart;
+</body>
+
+</html>
+
+<script>
+    const url = "http://88.148.208.176:2236";
+    var TempValues = [];
+    var tempchart;
+    var HumValues = [];
+    var Humchart;
 
 
-               
 
 
-        $(document).ready(function () {
 
-            tempchart = new CanvasJS.Chart("TempchartContainer", {
-                animationEnabled: true,
-                theme: "light2",
-                title: {
-                    text: "Lämpötila"
-                },
-                axisY: {
-                    includeZero: false
-                },
-                data: [{
-                    type: "line",
-                    dataPoints: TempValues
-                }]
-            });
-            tempchart.render();
+    $(document).ready(function () {
+        ($("#state").text() == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
+        $('#temp').text(77 + String.fromCharCode(176) + "C");
+        $('#timer').text(secondsTimeSpanToHMS(2222));
 
-        
 
-            Humchart = new CanvasJS.Chart("HumchartContainer", {
+        tempchart = new CanvasJS.Chart("TempchartContainer", {
+            animationEnabled: true,
+            theme: "light2",
+            title: {
+                text: "Lämpötila"
+            },
+            axisY: {
+                includeZero: false
+            },
+            data: [{
+                type: "line",
+                dataPoints: TempValues
+            }]
+        });
+        tempchart.render();
+
+
+
+        Humchart = new CanvasJS.Chart("HumchartContainer", {
             animationEnabled: true,
             theme: "light2",
             title: {
@@ -194,37 +206,48 @@
         });
         Humchart.render();
 
-            var jqxhr = $.get(url+"/0", function (data, status) {
-                if(data.State == 1){
-                   var mennytAika = data.Time;
-                    updateGraphs(mennytAika);
-                    paivitysfunktio();
+        var jqxhr = $.get(url + "/data", function (data, status) {
+            if (data.State == 1) {
+                var mennytAika = data.Time;
 
-                }
-            });
-
-
-            setInterval(function () {
-                //ajastin joka päivittää graafit ja ikkunat
                 paivitysfunktio();
-                updateGraphs(0);
-            }, 1000);
+
+                if (mennytAika > 0)
+                    updateGraphs(mennytAika);
+
+            }
         });
 
-        function updateGraphs(aika) {
-            //päivittää graafit (pitäisikö varmaan ottaa parametreinä ajanjakso?)
-            //jos aika 0 hakee viimeisimmän rivin
-            var jqxhr = $.get(url+"/"+aika, function (data, status) {
-                //get metodi joka hakee Temp,Hum,Ajanhetki, State
-                data.forEach(tempObjekti => {
-                    let tempV =new {
-                        y: tempObjekti.Temp,
-                        x: tempObjekti.Ajanhetki
-                    }
-                    let HumV = new {
-                        y: tempObjekti.Hum,
-                        x: tempObjekti.Ajanhetki
-                    }
+
+        setInterval(function () {
+            //ajastin joka päivittää graafit ja ikkunat
+            paivitysfunktio();
+            updateGraphs(0);
+        }, 1000);
+    });
+
+    function updateGraphs(aika) {
+        //päivittää graafit (pitäisikö varmaan ottaa parametreinä ajanjakso?)
+        //jos aika 0 hakee viimeisimmän rivin
+        var maxDate = Date.parse($("#datepickerMax").val()) || new Date();
+        var minDate = Date.parse($("#datepickerMin").val()) || 0;
+
+        var newurl = url + "/data?start_time=" + minDate + "&end_time=" + maxDate;
+
+        if (aika == 0)
+            var newurl = url + "/data";
+
+        var jqxhr = $.get(newurl, function (data, status) {
+            //get metodi joka hakee Temp,Hum,Ajanhetki, State
+            data.forEach(tempObjekti => {
+                let tempV = new {
+                    y: tempObjekti.Temp,
+                    x: tempObjekti.SavedAt
+                }
+                let HumV = new {
+                    y: tempObjekti.Hum,
+                    x: tempObjekti.SavedAt
+                }
                 HumValues.push(HumV);
                 TempValues.push(tempV);
 
@@ -236,46 +259,46 @@
     }
 
 
-        function paivitysfunktio() {//päivittää ylälaidassa olevat valuet
-                var jqxhr = $.get(url + "/0", function (data, status) {
-                    $('#temp').text(data.Temp + String.fromCharCode(176) + "C"),
-                    $('#humi').text(data.Moist +" %"),
-                    $('#timer').text(secondsTimeSpanToHMS(data.Time)),
-                    (data.State == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
-                });
-            }
+    function paivitysfunktio() {//päivittää ylälaidassa olevat valuet
+        var jqxhr = $.get(url + "/data", function (data, status) {
+            $('#temp').text(data.Temp + String.fromCharCode(176) + "C"),
+                $('#humi').text(data.Hum + " %"),
+                // $('#timer').text(secondsTimeSpanToHMS(data.Time)),
+                (data.State == 1) ? $('#state').addClass("green").text("on") : ('#state').addClass("red").text("off");
+        });
+    }
     function secondsTimeSpanToHMS(s) {//tärkeä sekunnit h:m:s muotoon funktio
-        var h = Math.floor(s / 3600); 
+        var h = Math.floor(s / 3600);
         s -= h * 3600;
-        var m = Math.floor(s / 60); 
+        var m = Math.floor(s / 60);
         s -= m * 60;
-        return h + ":" + (m < 10 ? '0' + m : m) + ":" + (s < 10 ? '0' + s : s); 
+        return h + ":" + (m < 10 ? '0' + m : m) + ":" + (s < 10 ? '0' + s : s);
     }
 
 
-            function Paalle(state) {
+    function Paalle(state) {
 
-                if (state == 1) {//hieno tietoturva ominaisuus
-                    var pw = prompt("Syötä salasana", "");
-                    if (pw == undefined || pw != salainensana )//kovakoodattu salasana
-                        return
+        if (state == 1) {//hieno tietoturva ominaisuus
+            var pw = prompt("Syötä salasana", "");
 
-                    var aika = $("#ajastin").val() * 60;
-                }
+            if (pw == undefined || pw != salainensana)//kovakoodattu salasana
+                return
 
-                $.ajax({
-                    url: url + "?" + state + "&" + aika,
-                    type: 'POST',
-                    success: function (data) {
-                        console.log("Kiukaan state muutettu")
-                        paivitysfunktio();
-                    }
-                });
-            };
-            
-    </script>
+            var aika = $("#ajastin").val() * 60;
+        }
 
-</body>
+        var newState = { "state": state }
 
-</html>
 
+        $.ajax({//annetaan negatiivinen aika ajastimelle
+            url: url + "/switch",
+            type: 'POST',
+            data: newState,
+            success: function (data) {
+                console.log("Kiukaan state muutettu")
+                $('#state').addClass("green").text("on");
+            }
+        });
+    };
+
+</script>
