@@ -31,6 +31,24 @@ CREATE TABLE `Mittaukset` (
   PRIMARY KEY (`SavedOn`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `Tasks`
+--
+
+DROP TABLE IF EXISTS `Tasks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `Tasks` (
+  `Id` int(11) NOT NULL AUTO_INCREMENT,
+  `Created` datetime DEFAULT NULL,
+  `Due` datetime DEFAULT NULL,
+  `Action` text DEFAULT NULL,
+  `Done` tinyint(1) NOT NULL DEFAULT 0,
+  `Deleted` tinyint(1) DEFAULT 0,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -41,4 +59,4 @@ CREATE TABLE `Mittaukset` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-17 20:06:42
+-- Dump completed on 2020-03-18 18:11:39
