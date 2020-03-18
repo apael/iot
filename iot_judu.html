@@ -410,11 +410,14 @@
         });
 
         var jqxhr = $.get(url + "/tasks", function (data, status) {
-            var nextEvent = Date.parse(data[0].Due);
-            var timeNow = Date.parse(new Date());
-            var difference = nextEvent - timeNow;
-            console.log(difference);
-            $('#timer').text(secondsTimeSpanToHMS(difference / 1000));
+            if (typeof (data[0]) !== 'undefined') {
+                var nextEvent = Date.parse(data[0].Due);
+                var timeNow = Date.parse(new Date());
+                var difference = nextEvent - timeNow;
+                $('#timer').text(secondsTimeSpanToHMS(difference / 1000));
+            } else
+                $('#timer').text(secondsTimeSpanToHMS(0));
+
         });
 
     }
