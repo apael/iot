@@ -176,6 +176,7 @@
             <p id="info">Valitse päivä: <input id="datepickerMin"></p>
             <p id="info">Valitse päivä: <input id="datepickerMax"></p>
             <button type="button" id="hae">Hae</button>
+            <button type="button" id="reset">Reset</button>
 
         </nav>
 
@@ -204,6 +205,7 @@
     var HumValues = [];
     var Humchart;
     const defaultOnTime = 5;
+    var haku = false;
 
 
     $(document).ready(function () {
@@ -260,8 +262,10 @@
 
         setInterval(function () {
             //ajastin joka päivittää graafit ja ikkunat
+            if (!haku)
+                updateGraphs(0);
+
             paivitysfunktio();
-            updateGraphs(0);
         }, 1000 * 60);
 
         $(".dt").datetimepicker({//ajastin
@@ -279,18 +283,14 @@
         var dt = new Date();
         dt.setDate(dt.getDate() - 366);
 
-
-
         $(function () {
             $("#datepickerMin").datepicker({
-
                 minDate: dt
             });
         });
 
         $(function () {
             $("#datepickerMax").datepicker({
-
                 minDate: dt
             });
         });
@@ -298,7 +298,7 @@
         $("#hae").click(function (e) {
             tempchart.data[0].remove();
             Humchart.data[0].remove();
-
+            haku = true;
 
             TempValues = [];
             HumValues = [];
@@ -318,7 +318,36 @@
 
             updateGraphs(1);
         });
+        $("#reset").click(function (e) {
+            tempchart.data[0].remove();
+            Humchart.data[0].remove();
+            haku = false;
 
+            TempValues = [];
+            HumValues = [];
+
+
+            var serieT = {
+                type: "line",
+                dataPoints: TempValues
+            }
+            var serieH = {
+                type: "line",
+                dataPoints: HumValues
+            }
+
+            tempchart.options.data.push(serieT);
+            Humchart.options.data.push(serieH);
+            $("#datepickerMax").val('');
+            $("#datepickerMin").val('');
+
+
+            var jqxhr = $.get(url + "/data", function (data, status) {
+                data[0].State == 1 ? updateGraphs(3) : updateGraphs(1);
+
+            });
+
+        });
     });
 
     function updateGraphs(aika) {
@@ -375,18 +404,26 @@
         var jqxhr = $.get(url + "/data", function (data, status) {
             $('#temp').text(data[0].Temp + String.fromCharCode(176) + "C"),
                 $('#humi').text(data[0].Hum + " %"),
-                // $('#timer').text(secondsTimeSpanToHMS(data.Time)),
                 (data[0].State == 1) ?
                     $('#state').addClass("green").text("on").removeClass("red") :
                     $('#state').addClass("red").text("off").removeClass("green");
         });
+
+        var jqxhr = $.get(url + "/tasks", function (data, status) {
+            var nextEvent = Date.parse(data[0].Due);
+            var timeNow = Date.parse(new Date());
+            var difference = nextEvent - timeNow;
+            console.log(difference);
+            $('#timer').text(secondsTimeSpanToHMS(difference / 1000));
+        });
+
     }
     function secondsTimeSpanToHMS(s) {//tärkeä sekunnit h:m:s muotoon funktio
         var h = Math.floor(s / 3600);
         s -= h * 3600;
         var m = Math.floor(s / 60);
         s -= m * 60;
-        return h + ":" + (m < 10 ? '0' + m : m) + ":" + (s < 10 ? '0' + s : s);
+        return h + " h " + (m < 10 ? '0' + m : m) + " Min";
     }
 
     Number.prototype.padLeft = function (base, chr) {
@@ -438,7 +475,6 @@
 
                 var sulkuaika = new Date(aloitusaika);
                 sulkuaika.setHours(sulkuaika.getHours() + 3);
-                console.log(sulkuaika);
 
                 todo.push({
                     "Due": sulkuaika + ":00",
