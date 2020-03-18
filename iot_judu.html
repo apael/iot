@@ -151,10 +151,10 @@
                 <th class="w">State</th>
             </tr>
             <tr>
-                <td id="temp" class="box">22 &#8451</td>
-                <td id="humi" class="box">12 %</td>
-                <td id="timer" class="box">40</td>
-                <td id="state" class="box">1</td>
+                <td id="temp" class="box"></td>
+                <td id="humi" class="box"></td>
+                <td id="timer" class="box"></td>
+                <td id="state" class="box"></td>
             </tr>
         </table>
     </header>
@@ -209,12 +209,6 @@
 
 
     $(document).ready(function () {
-        ($("#state").text() == 1) ?
-            $('#state').addClass("green").text("on") :
-            $('#state').addClass("red").text("off");
-        $('#temp').text(77 + String.fromCharCode(176) + "C");
-        $('#timer').text(secondsTimeSpanToHMS(2222));
-
 
         tempchart = new CanvasJS.Chart("TempchartContainer", {
             animationEnabled: true,
@@ -259,13 +253,12 @@
             data[0].State == 1 ? updateGraphs(3) : updateGraphs(1);
 
             paivitysfunktio();
-
         });
 
 
         setInterval(function () {
             //ajastin joka päivittää graafit ja ikkunat
-            if (!haku)
+            if (!haku)//jos haku käynnissä ei päivitä graafia
                 updateGraphs(0);
 
             paivitysfunktio();
@@ -283,75 +276,56 @@
 
         });
 
-        var dt = new Date();
+        var dt = new Date();//mindate datepickereihin (turha?)
         dt.setDate(dt.getDate() - 366);
 
-        $(function () {
+        $(function () {//datepicker min
             $("#datepickerMin").datepicker({
                 minDate: dt
             });
         });
 
-        $(function () {
+        $(function () {//datepicker max
             $("#datepickerMax").datepicker({
                 minDate: dt
             });
         });
 
-        $("#hae").click(function (e) {
-            tempchart.data[0].remove();
-            Humchart.data[0].remove();
-            haku = true;
-
-            TempValues = [];
-            HumValues = [];
-
-
-            var serieT = {
-                type: "line",
-                dataPoints: TempValues
-            }
-            var serieH = {
-                type: "line",
-                dataPoints: HumValues
-            }
-
-            tempchart.options.data.push(serieT);
-            Humchart.options.data.push(serieH);
-
+        $("#hae").click(function (e) {//hae nappi
+            clearGraphs();
             updateGraphs(1);
         });
-        $("#reset").click(function (e) {
-            tempchart.data[0].remove();
-            Humchart.data[0].remove();
-            haku = false;
-
-            TempValues = [];
-            HumValues = [];
-
-
-            var serieT = {
-                type: "line",
-                dataPoints: TempValues
-            }
-            var serieH = {
-                type: "line",
-                dataPoints: HumValues
-            }
-
-            tempchart.options.data.push(serieT);
-            Humchart.options.data.push(serieH);
+        $("#reset").click(function (e) {//reset nappi
+            clearGraphs();
             $("#datepickerMax").val('');
             $("#datepickerMin").val('');
-
-
             var jqxhr = $.get(url + "/data", function (data, status) {
                 data[0].State == 1 ? updateGraphs(3) : updateGraphs(1);
-
             });
-
         });
     });
+
+    function clearGraphs() {//tyhjentää graafit
+        tempchart.data[0].remove();
+        Humchart.data[0].remove();
+        haku = false;
+
+        TempValues = [];
+        HumValues = [];
+
+        var serieT = {
+            type: "line",
+            dataPoints: TempValues
+        }
+        var serieH = {
+            type: "line",
+            dataPoints: HumValues
+        }
+
+        tempchart.options.data.push(serieT);
+        Humchart.options.data.push(serieH);
+    }
+
 
     function updateGraphs(aika) {
         //päivittää graafit 
@@ -360,10 +334,8 @@
         var d = new Date();
         d.setHours(d.getHours() - aika);
 
-
         !$("#datepickerMax").val() ? maxDate = new Date() : maxDate = new Date($("#datepickerMax").val());
         !$("#datepickerMin").val() ? minDate = d : minDate = new Date($("#datepickerMin").val());
-
 
         var newurl = url + "/data?start_time=" + formatDate(minDate) + "&end_time=" + formatDate(maxDate);
 
@@ -376,7 +348,6 @@
             //get metodi joka hakee Temp,Hum,Ajanhetki, State
             data.forEach(tempObjekti => {
                 if (aika > 1 && tempObjekti.State == 0) {
-
                 } else {
                     let tempV = {
                         y: tempObjekti.Temp,
@@ -475,13 +446,9 @@
             if (pw == undefined || pw != "salainensana")//kovakoodattu salasana
                 return
 
-
-
             var aloitusaika = $("#start_time").val() || 0;
 
-
             if (aloitusaika.length > 0) {
-
 
                 todo.push({
                     "Due": aloitusaika + ":00",
@@ -495,8 +462,6 @@
                     "Due": sulkuaika + ":00",
                     "Action": "0"
                 });
-
-                console.log(todo);
 
                 $.ajax(url + "/tasks", {
                     method: "POST",
