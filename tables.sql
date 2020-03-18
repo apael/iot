@@ -45,6 +45,7 @@ CREATE TABLE `Tasks` (
   `Due` datetime DEFAULT NULL,
   `Action` text DEFAULT NULL,
   `Done` tinyint(1) NOT NULL DEFAULT 0,
+  `Deleted` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -58,4 +59,4 @@ CREATE TABLE `Tasks` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-18 16:55:08
+-- Dump completed on 2020-03-18 18:11:39

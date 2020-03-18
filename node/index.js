@@ -231,7 +231,7 @@ serial_parser.on("data", function(line) {
 // --- GET TASKS ---
 app.get("/tasks", function(req, res, n) {
 
-  var q = "SELECT * FROM Tasks WHERE Done = ? ORDER BY Due ASC";
+  var q = "SELECT * FROM Tasks WHERE Done = ? AND Deleted = 0 ORDER BY Due ASC";
   var where_done = 0;
 
   if(typeof req.query.done !== 'undefined') {
@@ -255,8 +255,6 @@ app.get("/tasks", function(req, res, n) {
 // --- ADD TASKS ---
 app.post("/tasks", function(req, res, n){
 
-  console.log(req.body);
-  // handle multiple:
   if(req.body.length > 0) {
 
     var status = "OK";
@@ -298,12 +296,52 @@ app.post("/tasks", function(req, res, n){
 
 });
 
+// --- DELETE TASK ---
+app.post("/tasks/delete", function(req, res, n){
+  
+  if(typeof req.body.Id !== 'undefined') {
+    
+    var task_id = req.body.Id;
+
+    if(task_id > 0) {
+
+      var q = "UPDATE Tasks SET Deleted = 1 WHERE Id = ?";
+      var params = [task_id];
+    
+      db.query(q, params, function(err, db_res) {
+
+        if(err) {
+
+          console.log(err);
+
+        }
+
+        res.json({status: "OK"});
+
+      });
+
+    }
+    else {
+
+      res.json({status: "NOT_OK"});
+      
+    }
+
+  }
+  else {
+
+    res.json({status: "NOT_OK"});
+
+  }
+
+});
+
 // --- HANDLE TASKS ---
 
 setInterval(function() {
   
   var now = new Date();
-  var q = "select * from Tasks WHERE Done = 0 ORDER BY Due ASC, Action DESC LIMIT 1";
+  var q = "select * from Tasks WHERE Done = 0 and Deleted = 0 ORDER BY Due ASC, Action DESC LIMIT 1";
   var done = 0;
 
   db.query(q, function(err, db_res){
