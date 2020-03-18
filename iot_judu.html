@@ -408,18 +408,27 @@
                     $('#state').addClass("green").text("on").removeClass("red") :
                     $('#state').addClass("red").text("off").removeClass("green");
         });
-
         var jqxhr = $.get(url + "/tasks", function (data, status) {
-            if (typeof (data[0]) !== 'undefined') {
-                var nextEvent = Date.parse(data[0].Due);
+            var i = 0;
+            var CurState;
+            $('#state').text() == "OFF" ? CurState = "0" : CurState = "1";
+
+            while (data[i].Action != CurState) {
+                if (typeof (data[i].Due) !== 'undefined')
+                    i++;
+                else {
+                    $('#timer').text(secondsTimeSpanToHMS(0));
+                    return;
+                }
+
+            }
+            if (data[i].Action == CurState) {
+                var nextEvent = Date.parse(data[i].Due);
                 var timeNow = Date.parse(new Date());
                 var difference = nextEvent - timeNow;
                 $('#timer').text(secondsTimeSpanToHMS(difference / 1000));
-            } else
-                $('#timer').text(secondsTimeSpanToHMS(0));
-
+            }
         });
-
     }
     function secondsTimeSpanToHMS(s) {//tärkeä sekunnit h:m:s muotoon funktio
         var h = Math.floor(s / 3600);
