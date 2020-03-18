@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script src="/example/jquery.datetimepicker.full.min.js"></script>
+    <link rel="stylesheet" href="/example/jquery.datetimepicker.min.css">
+
+    <title>MahtiÄppiAjastin v.0.0.0.0.1</title>
+  </head>
+
+  <body>
+    <div class="container">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">MahtiÄPPIAjastin v.0.0.0.0.1</a>
+        </nav>
+        <div class="container">
+          <div class="row">
+            <div class="col">
+              <br>
+              <h3>Ajastin</h3><hr>
+
+              <div class="form-group">
+                Päälle <input type="text" id="start_time" class="dt form-control" /><br>
+                Pois <input type="text" id="end_time" class="dt form-control" /><br>
+                <button class="btn btn-primary form-control" id="save">Tallenna</button>
+              </div>
+            </div>
+            <div class="col"></div>
+            <div class="col">
+              <br>
+              <h3>Tulevat tapahtumat</h3><button class="btn btn-primary" id="tbl_refresh">Päivitä</button><hr>
+              
+              <table class="table table-striped" id="tbl_tasks">
+                <th>#</th><th>Aika</th><th>Toiminto</th>
+
+              </table>
+              
+            </div>
+          </div>
+        </div>
+    </div>
+  </body>
+
+  <script>
+
+    var url = "http://urliurliurliurli/tasks";
+
+    $(".dt").datetimepicker({
+
+      inline: false,
+      ownerDocument: document,
+      contentWindow: window,
+      format: "Y-m-d H:i",
+      formatTime: "H:i",
+      formatDate: "Y-m-d",
+      startDate: new Date(),
+      step: 1
+
+    });
+
+    function refresh_tbl() {
+      
+      $(".tbl_row").remove();
+
+      $.ajax(url, {
+
+        method: "GET",
+
+        success: function(data, status, xhr){
+
+          data.forEach(function(row) {
+            
+            $("#tbl_tasks").append("<tr class='tbl_row'><td>"+row.Id+"</td><td>"+row.Due+"</td><td>"+row.Action+"</td></tr>");
+
+          });
+
+        }
+
+      });
+
+    }
+
+    $("#save").click(function(e){
+      
+      var todo = [];
+
+      if($("#start_time").val().length > 0) {
+
+        todo.push({
+
+            "Due": $("#start_time").val() + ":00",
+            "Action": "1"
+            
+          });
+
+      }
+
+      if($("#end_time").val().length > 0) {
+
+        todo.push({
+
+            "Due": $("#end_time").val() + ":00",
+            "Action": "0"
+
+          });
+
+      }
+
+      if(todo.length > 0) {
+
+        $.ajax(url, {
+
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify(todo),
+          success: function(data, status, xhr) {
+
+            refresh_tbl();
+
+          }
+
+        });
+
+      }
+      else {
+
+      }
+
+    });
+
+    $("#tbl_refresh").click(function(e){
+
+      refresh_tbl();
+
+    });
+
+    refresh_tbl();
+
+  </script>
+
+</html>

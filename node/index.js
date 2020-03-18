@@ -16,6 +16,10 @@ var app = express();
 app.use(bp.json());
 app.use(cors());
 
+app.use("/example", express.static("public")); // example ui
+
+const path = require("path");
+
 var db = mysql.createConnection({
 
   host: "localhost",
@@ -168,7 +172,7 @@ app.get("/status", function(req, res, n){
 });
 
 // --- REQUEST DATA FROM SERIAL EVERY 60 SEC ---
-setInterval(() => {
+setInterval(function() {
   
   try {
 
@@ -223,6 +227,133 @@ serial_parser.on("data", function(line) {
   }
 
 });
+
+// --- GET TASKS ---
+app.get("/tasks", function(req, res, n) {
+
+  var q = "SELECT * FROM Tasks WHERE Done = ? ORDER BY Due ASC";
+  var where_done = 0;
+
+  if(typeof req.query.done !== 'undefined') {
+    where_done = req.query.done == 1 ? 1 : 0
+  }
+
+  var params = [where_done];
+
+  db.query(q, params, function(err, db_res) {
+
+    if(err) {
+      console.log(err);
+    }
+
+    res.json(db_res);
+
+  });
+
+});
+
+// --- ADD TASKS ---
+app.post("/tasks", function(req, res, n){
+
+  console.log(req.body);
+  // handle multiple:
+  if(req.body.length > 0) {
+
+    var status = "OK";
+
+    req.body.forEach(function(task) {
+      
+      var due = new Date(task.Due);
+
+      if(due.getTime() === due.getTime() && task.Action.length > 0) {
+
+        var q = "INSERT INTO Tasks(Created, Due, Action) VALUES (now(), ?, ?)";
+        var params = [due, task.Action];
+
+        db.query(q, params, function(err, db_res){
+
+          if(err) {
+  
+            console.log(err);
+  
+          }
+  
+          status = "OK";
+  
+        });
+
+      }
+      else {
+        status = "NOT_OK";
+      }
+
+    });
+
+    res.json({status: status});
+
+  }
+  else {
+    res.json({status: "NOT_OK"});
+  }
+
+});
+
+// --- HANDLE TASKS ---
+
+setInterval(function() {
+  
+  var now = new Date();
+  var q = "select * from Tasks WHERE Done = 0 ORDER BY Due ASC, Action DESC LIMIT 1";
+  var done = 0;
+
+  db.query(q, function(err, db_res){
+
+    if(err) {
+
+      console.log(err);
+
+    }
+    if(db_res.length > 0) {
+      task = db_res[0];
+
+      if(now > new Date(task.Due)) {
+      
+        switch(task.Action) {
+
+          case "1":
+            save = true;
+            serial_port.write("1");
+            done = 1;
+            break;
+        
+          case "0":
+            save = true;
+            serial_port.write("0");
+            done = 1;
+            break;
+
+        }
+
+        var q = "UPDATE Tasks SET Done = ? WHERE Id = ?";
+        var params = [done, task.Id];
+
+        db.query(q, params, function(err, db_res){
+
+          if(err) {
+            console.log(err);
+          }
+
+          console.log("Task #" + task.Id + " done.");
+
+      });
+
+    }
+
+  }
+
+  });
+
+}, 1000);
 
 // --- START SERVER ---
 app.listen((server_port), () => {
