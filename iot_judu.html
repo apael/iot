@@ -292,11 +292,13 @@
         });
 
         $("#hae").click(function (e) {//hae nappi
+            haku = true;
             clearGraphs();
             updateGraphs(1);
         });
         $("#reset").click(function (e) {//reset nappi
             clearGraphs();
+            haku = false;
             $("#datepickerMax").val('');
             $("#datepickerMin").val('');
             var jqxhr = $.get(url + "/data", function (data, status) {
@@ -308,7 +310,6 @@
     function clearGraphs() {//tyhjentää graafit
         tempchart.data[0].remove();
         Humchart.data[0].remove();
-        haku = false;
 
         TempValues = [];
         HumValues = [];
